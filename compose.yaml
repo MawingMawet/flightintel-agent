@@ -1,0 +1,19 @@
+# Local run shape (PHASE3_PLAN Q4). Run from the repo root INSIDE WSL
+# (where the Docker Engine lives):
+#   cd /mnt/c/OM_Source/FlightIntelAgent && docker compose up --build
+#
+# host networking: the container's localhost is the WSL host, so the
+# PG_DSN in .env (localhost:5433) reaches the pgvector Postgres without
+# any network plumbing, and the API lands on host port 8000 (reachable
+# from Windows as http://localhost:8000).
+services:
+  flightintel:
+    build: .
+    image: flightintel:0.1.1
+    network_mode: host
+    env_file: .env
+    environment:
+      # Overrides the Windows path from .env with the in-container mount.
+      FLIGHT_DB_PATH: /data/products.db
+    volumes:
+      - ${PRODUCTS_DB:-/mnt/c/OM_Source/AirflowOSky/data/processed/products.db}:/data/products.db:ro

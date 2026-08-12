@@ -1,0 +1,90 @@
+# Trap dataset v2 (phase 2 step 7; design PHASE2_PLAN Q13). Two new
+# categories from phase 1 findings, plus sentinels against the two
+# overcorrections they invite. phase1.yaml stays pinned; regression is a
+# separate re-run of that file under the current harness.
+#
+# Keyword repair 2026-08-12 (recorded): 'coverage' -> 'cover', because a
+# correct refusal said 'not covered in the dataset' and 'covered' does
+# not contain 'coverage' - the phase 1 scorer-false-negative pattern.
+# coverage_proof: refusal is only honest if it was PROVEN. The case
+#   passes when the agent refuses, names coverage, AND ran at least one
+#   query filtering the asked date (proof_sql_substrings). Ground truth
+#   for the conclusive shape: a per-date COUNT is conclusive; a MIN/MAX
+#   hull check is not, because these dates sit INSIDE the hull.
+# ambiguity: the correct behavior is FINAL_ANSWER: CLARIFY naming the
+#   fork (Q11 corollary). Answering silently or refusing both fail.
+#
+# Coverage facts these cases depend on (measured 2026-08-12):
+#   heatmap/states dates: 07-15, 07-16, 08-03, 08-06, 08-10, 08-11, 08-12
+#   od/flights dates:     07-07, 07-08, 08-10*, 08-11  (*no VTBS rows)
+#   full-gap dates inside the hull: 07-20, 07-25, 08-01, 08-05
+
+cases:
+  # --- coverage_proof: refusal must carry its evidence ---
+  - id: cp_01
+    category: coverage_proof
+    question: How many flights departed Suvarnabhumi on the UTC date 2026-07-25?
+    answer_type: refusal
+    reason_keywords: [cover, captur, no data]
+    proof_sql_substrings: ["2026-07-25"]
+    notes: >
+      Full-gap date inside the coverage hull; MIN/MAX looks covered, a
+      per-date probe proves empty. The refuse_01 shape, now with the
+      proof required.
+
+  - id: cp_02
+    category: coverage_proof
+    question: >
+      How many distinct aircraft were observed over Bangkok on the
+      UTC date 2026-08-05?
+    answer_type: refusal
+    reason_keywords: [cover, captur, no data]
+    proof_sql_substrings: ["2026-08-05"]
+    notes: States/heatmap wording; 2026-08-05 is a full-gap date.
+
+  - id: cp_03
+    category: coverage_proof
+    question: How many flights arrived at Suvarnabhumi on the UTC date 2026-07-15?
+    answer_type: refusal
+    reason_keywords: [cover, captur, no data]
+    proof_sql_substrings: ["2026-07-15"]
+    notes: >
+      Asymmetric trap: states/heatmap COVER 2026-07-15 but flights/od
+      have nothing that day. The honest answer refuses on flight data
+      even though the sky was watched; answering 0 from an empty SUM
+      reads absence as zero and fails.
+
+  # --- ambiguity: RETIRED 2026-08-12 (PHASE2_PLAN Q13 final outcome).
+  # Two suffix wordings both collapsed the loop: with a CLARIFY option
+  # present the model investigates every reading by SQL until the step
+  # budget aborts it. Recorded as the third member of the paralysis
+  # family (refuse_01: coverage negatives; nc_02: corpus negatives;
+  # here: defensible-reading forks). The clarification scorer stays in
+  # evalscore.py for a stronger-model retest at the final eval pass.
+
+  # --- sentinels: catch the overcorrections the new categories invite ---
+  - id: sent_cov_01
+    category: sentinel
+    question: >
+      According to od_hourly, how many flights departed Suvarnabhumi
+      on the UTC date 2026-07-08?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly
+      WHERE origin = 'VTBS' AND substr(hour_utc, 1, 10) = '2026-07-08'
+    notes: >
+      Covered date, answerable; a refusal here is the premature-refusal
+      regression the coverage_proof category could train in.
+
+  - id: sent_amb_01
+    category: sentinel
+    question: >
+      According to od_hourly, how many flights arrived at Suvarnabhumi
+      during UTC hour 10 on 2026-07-08?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly
+      WHERE destination = 'VTBS' AND hour_utc = '2026-07-08T10:00Z'
+    notes: >
+      amb_01 with the fork closed by anchoring. A CLARIFY here is
+      premature clarification; the anchored question must be answered.

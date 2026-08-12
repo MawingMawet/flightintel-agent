@@ -1,0 +1,271 @@
+# Phase 2 RAG eval dataset v1 (design: PHASE2_PLAN Q10). Twelve
+# hand-written cases; reference answers are written FROM the corpus v1
+# chunks named in gold_sources, never from memory, so RAGAS context
+# recall has honest ground truth and recall@k has exact targets.
+#
+# Fields:
+#   question      what the user asks (runs through the real agent)
+#   reference     ground-truth answer for the judged metrics
+#   gold_sources  corpus chunk ids a correct retrieval must surface;
+#                 empty list means the docs genuinely do not cover it
+#   expect_not_covered  the correct behavior is an honest "not covered"
+#   requires_sql  the data half must produce at least one run_sql call
+#
+# Scoring: deterministic checks (recall@k over gold_sources, cited ids
+# a subset of retrieved ids) run for every case without a judge.
+# not-covered and mixed cases get judged metrics only where they are
+# meaningful; the harness records the exact treatment per category.
+
+cases:
+  # --- single-source: the answer lives in one chunk ---
+  - id: ss_01
+    category: single-source
+    question: >
+      Why does the raw data zone only ever append, while the products
+      get rebuilt? What load semantics did the pipeline choose?
+    reference: >
+      AirflowOSky chose append-only raw (the bronze zone) with derived
+      products that refresh (silver and gold). Replacing raw on each
+      poll would discard history and make time-varying products like
+      the per-hour heatmap impossible, because it would overwrite the
+      very observations those products need. Appending keeps the full
+      history and matches what the data means: a stream of observations
+      over time, not the current fleet. The accepted costs are that raw
+      grows without bound (a retention plan is owed) and that
+      overlapping poll windows can double-count, which is why
+      idempotency keys are owed on top.
+    gold_sources:
+      - AirflowOSky/working-docs/adr/0003-raw-appends-products-refresh.md
+    notes: Whole-ADR chunk; the Q3 chunking bet says this retrieves as one.
+
+  - id: ss_02
+    category: single-source
+    question: >
+      Why was the agent built on LangGraph from the first version
+      instead of hand-rolling the loop first and adopting a framework
+      later?
+    reference: >
+      The original plan was a hand-rolled SDK loop in v1 with a
+      LangGraph re-implementation later. On 2026-08-09 the project
+      realigned against a concrete AI Engineer role profile where
+      framework evidence matters, and time became the binding
+      constraint. Building on LangGraph from v1 ships the framework
+      evidence in phase 1, avoids paying for two implementations, and
+      the LangChain ecosystem (Gemini bindings, pgvector integration)
+      shortens the RAG phase. The accepted cost is losing direct
+      practice hand-writing the message-list cycle, mitigated by a
+      knowledge note mapping LangGraph onto the raw wire format and by
+      walking traced runs at that level.
+    gold_sources:
+      - FlightIntelAgent/working-docs/adr/0005-langgraph-from-v1.md
+
+  - id: ss_03
+    category: single-source
+    question: >
+      I heard a single frozen aircraft once distorted the heatmap's
+      hottest cells. What happened, and what prevents it now?
+    reference: >
+      The first full-raw build showed the two hottest map cells were
+      each one aircraft with a byte-frozen position, counted up to 123
+      times. The silver dedup key (icao24, last_contact) collapses
+      stale receptions, but a frozen feed is the opposite case:
+      last_contact keeps ticking while the position stops updating, so
+      every poll landed a "new" row carrying the same stale fix. The
+      fix (ADR 0013) dedups the heatmap gold input on (icao24,
+      time_position), first reception wins, leaving silver intact for
+      other products; the removal is audited as stale_position_removed
+      (481 stale repeats, 3.9%, on the real build). Afterward the top
+      cells became genuine approach-corridor cells.
+    gold_sources:
+      - AirflowOSky/working-docs/adr/0013-heatmap-stale-position-dedup.md
+
+  # --- cross-doc: the answer spans repos or chunks ---
+  - id: cd_01
+    category: cross-doc
+    question: >
+      What counts as a breaking change to the products.db contract, and
+      what has to happen in both repos when one lands?
+    reference: >
+      Within the six contract tables, any column difference is drift:
+      missing, extra, or retyped columns all count, and renames are a
+      remove plus an add. A semantic change that alters what an
+      existing column means (a gate, a dedup rule, a measure
+      definition) is also a version bump even when no column changes;
+      ADR 0013 changed what obs_count counts without touching the
+      schema. On a bump, AirflowOSky announces it in CHANGELOG.md and
+      updates the contract doc, and the consumer updates its pinned
+      schema in the same change window: one owner, two repos, one
+      coordinated move. The consumer fails loudly at startup on any
+      structural drift; new tables outside the six are non-breaking.
+    gold_sources:
+      - AirflowOSky/docs/FLIGHTINTEL_CONSUMER.md#change-policy-adr-0015
+      - AirflowOSky/working-docs/adr/0015-consumer-contract-strict-schema-pin.md
+
+  - id: cd_02
+    category: cross-doc
+    question: >
+      What does obs_count actually measure, and which rule stops the
+      agent from using it to count aircraft?
+    reference: >
+      obs_count counts position reports (observations), so it weights
+      dwell time and depends on how many minutes were polled in the
+      hour; it is not comparable across hours with different polling
+      coverage. Counting aircraft means aircraft_count, the distinct
+      icao24 measure, and distinct counts do not sum across cells or
+      hours because the same aircraft appears in many; a distinct count
+      spanning cells or hours must be computed from silver states. The
+      agent encodes this as measure discipline: "how many aircraft" is
+      never SUM(obs_count).
+    gold_sources:
+      - FlightIntelAgent/working-docs/knowledge/architecture.md#the-data-contract-what-the-agent-is-allowed-to-know
+      - AirflowOSky/docs/FLIGHTINTEL_CONSUMER.md#caveats-an-agent-must-respect-or-it-will-answer-wrongly
+
+  # --- caveat: the caveat-dense contract content must ground answers ---
+  - id: cv_01
+    category: caveat
+    question: >
+      Some hours in the data have only about five observations. Are
+      those real quiet hours?
+    reference: >
+      No. Hour boundaries leak backward a few seconds because event
+      time differs from capture time, producing sliver hours with
+      about five observations. Slivers must not be read as real
+      traffic levels. More generally, coverage is sparse capture
+      sessions, so thin or absent hours mean "not captured", never
+      "no traffic".
+    gold_sources:
+      - AirflowOSky/docs/FLIGHTINTEL_CONSUMER.md#caveats-an-agent-must-respect-or-it-will-answer-wrongly
+
+  - id: cv_02
+    category: caveat
+    question: >
+      Why might long-haul routes be under-represented in the od_hourly
+      top-pairs ranking?
+    reference: >
+      The OD product sits behind a hard cleaning gate that drops
+      flights with a null estimated departure or arrival airport,
+      because the product cannot use unattributable flights. Null
+      estimated airports cluster on long-haul routes, so the gate
+      biases top-pair rankings against them. This is a documented,
+      audited bias, not an accident: hard gates drop what the product
+      cannot use, soft signals are carried, and rejection is counted
+      and reported by reason, never silent.
+    gold_sources:
+      - AirflowOSky/docs/FLIGHTINTEL_CONSUMER.md#caveats-an-agent-must-respect-or-it-will-answer-wrongly
+      - AirflowOSky/working-docs/adr/0008-cleaning-gate-hard-drop-soft-carry.md
+
+  # --- not-covered: honesty against temptation (prompt rule 9) ---
+  - id: nc_01
+    category: not-covered
+    question: >
+      How does the pipeline detect GPS spoofing or faked transponder
+      data?
+    reference: >
+      The documentation does not cover spoofing or transponder-fraud
+      detection. An honest answer says so instead of describing
+      general ADS-B defenses from memory.
+    gold_sources: []
+    expect_not_covered: true
+    notes: >
+      Tempting: the model likely knows generic ADS-B spoofing
+      literature. The docs discuss stale positions and dedup, which is
+      adjacent enough to bait a stretched answer.
+
+  - id: nc_02
+    category: not-covered
+    question: >
+      Is there a plan to expand coverage beyond Bangkok to other
+      cities?
+    reference: >
+      The documentation does not cover geographic expansion. The
+      roadmap covers phases (RAG, tracing and serving, GCP
+      deployment), not new coverage areas.
+    gold_sources: []
+    expect_not_covered: true
+
+  # --- mixed: data + knowledge in one question (Q9's no-router bet) ---
+  - id: mx_01
+    category: mixed
+    question: >
+      Which UTC hour had the most distinct aircraft, and why should I
+      trust that number over one built from obs_count?
+    reference: >
+      The count itself is computed live from the database at the
+      distinct-aircraft grain. It is trustworthy where an obs_count
+      ranking is not because obs_count counts position reports, which
+      weight dwell time and polling minutes; aircraft_count counts
+      distinct icao24. Distinct counts do not sum across cells or
+      hours, so an hour-level distinct count must come from silver
+      states rather than summing the gold heatmap.
+    gold_sources:
+      - FlightIntelAgent/working-docs/knowledge/architecture.md#the-data-contract-what-the-agent-is-allowed-to-know
+    requires_sql: true
+
+  - id: mx_02
+    category: mixed
+    question: >
+      How many distinct UTC hours does the data actually cover, and
+      what does it mean when an hour is missing?
+    reference: >
+      The count of covered hours is computed live from the database.
+      A missing hour means "not captured", never "no traffic":
+      coverage is sparse capture sessions, not continuous
+      surveillance, so absence of data must not be presented as zero
+      activity.
+    gold_sources:
+      - AirflowOSky/docs/ARCHITECTURE.md#known-limitations-consumers-must-respect-these
+    requires_sql: true
+
+  # --- seed finding: the recorded corpus v1 retrieval failure ---
+  # v1.2 (2026-08-12): seed gold_sources point at the corpus v2
+  # Q3-block id (Q14 label chunks); v1 baselines used the whole-section
+  # id. Recorded in Q14: the gold moves because the fix is about it.
+  # v1.1 (2026-08-12): seed_02 added after the baseline run. seed_01
+  # PASSED against prediction because its wording carries stronger
+  # tokens ("documentation", "vector index") than the probe wording of
+  # the recorded finding; seed_02 is that probe wording verbatim. The
+  # pair measures retrieval's wording sensitivity; corpus v2 must close
+  # the gap between them, not just pass one phrasing.
+  - id: seed_01
+    category: seed-finding
+    question: >
+      How are documentation chunks sized for the vector index, and why
+      are ADRs never split?
+    reference: >
+      Files that fit the 6,000-character cap become one whole-file
+      chunk; larger files split recursively at heading boundaries,
+      with paragraph packing as a last resort and pieces under the
+      200-character floor merged into a neighbor. Every ADR fits whole
+      under the cap (median about 726 estimated tokens, max about
+      1,399), so ADRs are never split, which keeps context, options,
+      decision, and consequences retrievable as one chunk. Every chunk
+      carries a breadcrumb title prepended to the embedded text so the
+      vector keeps document context.
+    gold_sources:
+      - FlightIntelAgent/working-docs/plans/PHASE2_PLAN.md#q3-chunking-design-answered-2026-08-11-measured
+    notes: >
+      Recorded corpus v1 finding: this gold source ranked 9th at
+      distance 0.32 (the Q&A chunk blends six questions; upstream
+      raw-append docs own the word "chunk"). Expected to FAIL recall@4
+      at the v1 baseline; corpus v2 must prove the fix in this number.
+      Baseline outcome (2026-08-12): PASSED. See seed_02.
+
+  - id: seed_02
+    category: seed-finding
+    question: How are chunks sized and why are ADRs never split?
+    reference: >
+      Files that fit the 6,000-character cap become one whole-file
+      chunk; larger files split recursively at heading boundaries,
+      with paragraph packing as a last resort and pieces under the
+      200-character floor merged into a neighbor. Every ADR fits whole
+      under the cap (median about 726 estimated tokens, max about
+      1,399), so ADRs are never split, which keeps context, options,
+      decision, and consequences retrievable as one chunk. Every chunk
+      carries a breadcrumb title prepended to the embedded text so the
+      vector keeps document context.
+    gold_sources:
+      - FlightIntelAgent/working-docs/plans/PHASE2_PLAN.md#q3-chunking-design-answered-2026-08-11-measured
+    notes: >
+      The recorded finding's probe wording VERBATIM (ranked 9th at 0.32
+      in raw retrieval). seed_01 asks the same thing with richer tokens
+      and passed baseline; this phrasing is the one corpus v2 must fix.

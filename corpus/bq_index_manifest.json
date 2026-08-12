@@ -1,0 +1,14 @@
+{
+  "corpus_version": 2,
+  "embedding_model": "gemini-embedding-2",
+  "embedding_dims": 3072,
+  "task_type_documents": "RETRIEVAL_DOCUMENT",
+  "task_type_queries": "RETRIEVAL_QUERY",
+  "distance": "cosine",
+  "source": "pgvector-export",
+  "table": "flightintel-505316.flightintel_rag.doc_chunks",
+  "dataset_location": "asia-southeast1",
+  "chunk_count": 178,
+  "load_job_id": "c635c898-f9f4-4805-ad63-e18b18f754b1",
+  "built_at": "2026-08-12T18:13:33+00:00"
+}

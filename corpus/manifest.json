@@ -1,0 +1,335 @@
+{
+  "corpus_version": 2,
+  "built_at": "2026-08-12T12:57:28+00:00",
+  "cap_chars": 6000,
+  "floor_chars": 200,
+  "repos": [
+    {
+      "name": "AirflowOSky",
+      "commit": "ed6cef511e1d6142e2cedf3d4969aa2f4de5a411",
+      "dirty_files": [],
+      "skipped_untracked": []
+    },
+    {
+      "name": "FlightIntelAgent",
+      "commit": "c07284d61f8f5ef0a0a18454929d5eccc9e10bd8",
+      "dirty_files": [],
+      "skipped_untracked": []
+    }
+  ],
+  "files": [
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0001-data-source-opensky.md",
+      "sha256": "f9af3112a29def3ecff7d022f246777d869a7e8a3de0162e476ac8195777fe77",
+      "chars": 1527,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0002-od-from-flights-not-stitched-states.md",
+      "sha256": "6976503e7b5f6364e1204d7d3ce9bd6658a06ec04b20b50d173d3cc660c403cc",
+      "chars": 1364,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0003-raw-appends-products-refresh.md",
+      "sha256": "f073d3d01b45c97d174725c63bbb1c388da1714edc27ae883b24d9b7f994d745",
+      "chars": 1513,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0004-od-first-thin-slice-order.md",
+      "sha256": "b54e6d5a3b5f3d9f321d44e811c61211973f303ba82430f91eb4c509ad8e6e7a",
+      "chars": 879,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0005-v1-ingests-flights-only.md",
+      "sha256": "ebe5bda46ce57847fade4d26215e18b5785ed1a179aa0f2c3dcb853c7ec270bf",
+      "chars": 2045,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0006-raw-landing-untouched-json.md",
+      "sha256": "f09fcf27f4597b265d89d438b10408a0c2ee8f7ff55237f01f0efd8463a9f1ba",
+      "chars": 2502,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0007-grain-od-hourly.md",
+      "sha256": "55cda18abd3be5b798bf64d77a372e76e64c620cf384429d7db36b0ce8530545",
+      "chars": 2844,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0008-cleaning-gate-hard-drop-soft-carry.md",
+      "sha256": "d27e499ab48f5a9171ea032133492d99cd6c270240e07f4b0e2b7b3072cefdce",
+      "chars": 3622,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0009-states-bounded-accumulation.md",
+      "sha256": "8802eb7b41424238f8d302f6c5ca39463adf12e1898ca9a9124b457361c7ef80",
+      "chars": 2945,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0010-heatmap-grain-2dp-hourly.md",
+      "sha256": "4a1dd6362621cc1b6ebc16f803f790e3e84a9de236d620e529989792f4cb0971",
+      "chars": 3165,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0011-heatmap-gates-broken-vs-out-of-scope.md",
+      "sha256": "96129d69f63c4f23b0b2e9a9a07d398cf7972eb339b50a794f707bb2cc389a28",
+      "chars": 2860,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0012-record-architecture-decisions.md",
+      "sha256": "d72e3c50d49438394239e231ce064eeb9eaf112c567c8b3341b4186ed83fa417",
+      "chars": 1792,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0013-heatmap-stale-position-dedup.md",
+      "sha256": "98e7562ae40cc4994289a3d16c7376b8abedab10477fd9c0146578075e1f18db",
+      "chars": 3390,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0014-first-cloud-target-gcp.md",
+      "sha256": "e12cf877e44c526dc5401fd0d6a600150c02d4165fdc74fc599a6d72b5738ac8",
+      "chars": 3477,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0015-consumer-contract-strict-schema-pin.md",
+      "sha256": "8066e361c2cfe1b100105ad43ce9709a99dede98ca866d2d0dff7a0e4f4456d1",
+      "chars": 4537,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0016-cross-repo-governance-domain-authority.md",
+      "sha256": "056596fbee5a0916219ffd4f877ddf4e379cd6c2765af7c6e50000eb8f901794",
+      "chars": 5080,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0017-local-thin-orchestration.md",
+      "sha256": "3aa3094de59347bee1c2399cb8c991dbdcf4c68db35232dfb2310990408a8d77",
+      "chars": 5596,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/adr/0018-cloud-capture-slice.md",
+      "sha256": "8444de95e87cb6c23c4e94e2c3bebd70764c1e5d7bb68676288973387e93f232",
+      "chars": 6426,
+      "chunks": 6
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "docs/ARCHITECTURE.md",
+      "sha256": "f0aa0b8d234b33246187e10eae69c20ecc60d55297a6d918481f9ebe31e7eb25",
+      "chars": 17193,
+      "chunks": 15
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "docs/PRESENTATION.md",
+      "sha256": "562126332ce22987ccdedaa8c3a779e3ddccc8a453958adc941fb87095f2df61",
+      "chars": 11035,
+      "chunks": 9
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "docs/FLIGHTINTEL_CONSUMER.md",
+      "sha256": "9037e0b87773d6511b647b3d0b58a0c1a2d5ae8bc52652255151268e4e675b16",
+      "chars": 11600,
+      "chunks": 10
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/knowledge/LEARNING_NOTES.md",
+      "sha256": "72be57e355f27fd953514c5485c64026b546364d2deb781d5cb5f49156aefb83",
+      "chars": 39681,
+      "chunks": 13
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/knowledge/JUDGMENT_DRILLS.md",
+      "sha256": "a280bba6f02215e57e14a298a080b6137f1bbba6197ca688ffe8f389a8754928",
+      "chars": 7036,
+      "chunks": 13
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/knowledge/GRADED_ANSWERS.md",
+      "sha256": "c619e25f160d5bb22682b622d5d268d6391be494055f9ae86c469903a140f067",
+      "chars": 9213,
+      "chunks": 5
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "working-docs/knowledge/FIELD_NOTES.md",
+      "sha256": "05a12393e0db1b278943e02885947d22b0e6d1de16430a2e4773f578964edb37",
+      "chars": 2468,
+      "chunks": 1
+    },
+    {
+      "repo": "AirflowOSky",
+      "path": "CHANGELOG.md",
+      "sha256": "96a781fb807fdbfcdbaad9bd8c015c0d22dc8730f565c39450085350a8b9166f",
+      "chars": 6770,
+      "chunks": 7
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0001-separate-consumer-repo.md",
+      "sha256": "98fceb2d78b880aee307a137f4e893c6abf7b5b75dba5c4b96b36f5375334553",
+      "chars": 2783,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0002-llm-provider-claude-api-plus-ollama.md",
+      "sha256": "4589fd83983510a81581e146273a91bcde9d7e123c0dc803dc108c93e1aacc20",
+      "chars": 3289,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0003-database-strategy-sqlite-first.md",
+      "sha256": "7f349007cae8bd3ed0e9205c9290c3a99147c3a23f09345cac4c94870ba412bc",
+      "chars": 3666,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0004-record-architecture-decisions.md",
+      "sha256": "63bca0a705a949abd662e2d675851a37f4b7bf7a5fead9c1221e3588aca5048b",
+      "chars": 2316,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0005-langgraph-from-v1.md",
+      "sha256": "ae13e461aaef901e6e473b78050c001ad31e2a11b05b018a7cb3a6c464559606",
+      "chars": 3163,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0006-gemini-gcp-realignment.md",
+      "sha256": "a9b4f60f5eb69628c912302f06492ee0aa61a7279bbafb9ab09f26ed9ef1fea9",
+      "chars": 2905,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0007-vectors-in-local-pgvector-products-stay-sqlite.md",
+      "sha256": "de77ad1a38f974904ea88b3117dc5059f2987cab5e129f2da066a9fb5b851d98",
+      "chars": 3446,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/adr/0008-pgvector-runs-in-wsl2-not-docker.md",
+      "sha256": "ad4d681b3a930e977c82add0c6a71f1bd306fe788ff55eb0c145f65fbaaa6f8b",
+      "chars": 3730,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/knowledge/architecture.md",
+      "sha256": "bfe63d47b04b7195792cea34e6f29826685bd733c285564e0eebb88773935276",
+      "chars": 15109,
+      "chunks": 7
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/knowledge/under-the-hood.md",
+      "sha256": "dec687e1ffecf885911a6641170b5be4dcd02ef70cfd5fea7bf143f9fc77f996",
+      "chars": 9141,
+      "chunks": 4
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/knowledge/review/01-llm-apis-and-tool-calling.md",
+      "sha256": "6d22f47d3fcc0c8219552af809a30f5d6922e2b0702f233321722475405e9141",
+      "chars": 4511,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/knowledge/review/02-evaluation.md",
+      "sha256": "9a36ba528946e0ece7e53f42b0b281e2157ae4552c1e6c8706b2f6e948fe4203",
+      "chars": 4477,
+      "chunks": 1
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/plans/PHASE1_PLAN.md",
+      "sha256": "a742365810ebd960962c4b83d446bec201be1c7912e05604cc61845d08614d35",
+      "chars": 16115,
+      "chunks": 15
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "working-docs/plans/PHASE2_PLAN.md",
+      "sha256": "7848b09f5f0be11d1880955e597573b5664f285073333d3c41c4688d021fa272",
+      "chars": 38622,
+      "chunks": 20
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "docs/ARCHITECTURE_OVERVIEW.md",
+      "sha256": "1feb92c9a990f7962aa6aadbc82567ad040a29642febc2feede51e5067693518",
+      "chars": 6028,
+      "chunks": 7
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "docs/KNOWLEDGE_SUMMARY.md",
+      "sha256": "42df821224bb8bb5d79c3230811d703fa84377189871601409fc2914124cf43c",
+      "chars": 6118,
+      "chunks": 10
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "docs/USER_GUIDE.md",
+      "sha256": "b53f17c153e38bbc5b6e9e147fb450bde05c8282a260ddaf2a5e89953277e865",
+      "chars": 8352,
+      "chunks": 8
+    },
+    {
+      "repo": "FlightIntelAgent",
+      "path": "README.md",
+      "sha256": "3483bbefb2f662bda4dbb347e48ca4681ea8386ca5e68a329e1a67ee4578166c",
+      "chars": 4758,
+      "chunks": 1
+    }
+  ],
+  "totals": {
+    "files": 44,
+    "chunks": 178,
+    "chars": 298764
+  }
+}

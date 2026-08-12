@@ -1,0 +1,13 @@
+{
+  "corpus_version": 2,
+  "embedding_model": "gemini-embedding-2",
+  "embedding_dims": 3072,
+  "task_type_documents": "RETRIEVAL_DOCUMENT",
+  "task_type_queries": "RETRIEVAL_QUERY",
+  "distance": "cosine",
+  "ann_index": null,
+  "chunk_count": 178,
+  "postgres_version": "17.10 (Ubuntu 17.10-1.pgdg22.04+1)",
+  "pgvector_version": "0.8.6",
+  "built_at": "2026-08-12T13:00:39+00:00"
+}

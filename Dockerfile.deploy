@@ -1,0 +1,9 @@
+# Deploy image variant (PHASE4_PLAN Q1): the app-only image plus a
+# baked, versioned products.db snapshot. Built by
+# scripts/build_deploy_image.sh, which stages the snapshot into
+# .deploy/ (git-ignored) and stamps the tag with the snapshot date.
+# The app still opens SQLite with mode=ro; image layers are read-only.
+FROM flightintel:0.1.2
+
+COPY .deploy/products.db /data/products.db
+ENV FLIGHT_DB_PATH=/data/products.db

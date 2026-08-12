@@ -1,0 +1,4 @@
+# Context for the deploy build only (PHASE4_PLAN Q1): everything comes
+# from the app-only base image except the staged snapshot.
+*
+!.deploy/products.db

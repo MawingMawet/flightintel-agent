@@ -1,0 +1,18 @@
+# Local tool settings
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Env / secrets
+.env
+
+# Local data (upstream products.db is read via FLIGHT_DB_PATH, never committed)
+*.db
+!evals/fixtures/*.db
+.deploy/

@@ -1,0 +1,9 @@
+{
+  "dataset": "evals/datasets/rag_v1.yaml",
+  "model": "gemini-3.5-flash",
+  "prompt_version": "v3",
+  "judge_model": "gemini-3.5-flash",
+  "embedding_model": "gemini-embedding-2",
+  "corpus_version": 1,
+  "started_utc": "2026-08-12T12:13:05.254332+00:00"
+}

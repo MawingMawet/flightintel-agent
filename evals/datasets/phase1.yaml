@@ -1,0 +1,219 @@
+# Phase 1 trap-eval dataset. Every trap category maps to a documented
+# upstream rule (see architecture.md contract v2). Ground truth is
+# EXECUTABLE SQL evaluated against the same DB at run time, never a frozen
+# number, so the dataset survives upstream data growth (PHASE1_PLAN Q10).
+# Refusal cases pass only if the agent declines AND names the right reason
+# (Q5); reason_keywords are matched inside the FINAL_ANSWER line only.
+
+cases:
+  # --- baselines (easy, non-trap) ---
+  - id: base_01
+    category: baseline
+    question: How many flights are recorded in the flights table in total?
+    answer_type: number
+    ground_truth_sql: SELECT COUNT(*) FROM flights
+    notes: Simple count; any failure here means plumbing, not judgment.
+
+  - id: base_02
+    category: baseline
+    question: How many flights flew from Hong Kong to Suvarnabhumi in total?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly
+      WHERE origin = 'VHHH' AND destination = 'VTBS'
+    notes: Exercises resolve_airport (names, not ICAO codes, in the question).
+
+  - id: base_03
+    category: baseline
+    question: How many distinct grid cells appear in heatmap_hourly?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COUNT(*) FROM (SELECT DISTINCT cell_lat, cell_lon FROM heatmap_hourly)
+    notes: Distinct over the cell key, not row count.
+
+  # --- grain traps (roll-up is a query; counting rows double-counts) ---
+  - id: grain_01
+    category: grain
+    question: How many flights flew from VTBS to VTCC in total, across all hours?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly
+      WHERE origin = 'VTBS' AND destination = 'VTCC'
+    notes: COUNT(*) on od_hourly rows gives hour-cells, not flights.
+
+  - id: grain_02
+    category: grain
+    question: According to od_hourly, how many flights departed VTBS in total?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly WHERE origin = 'VTBS'
+    notes: Roll-up across destination AND hour at once.
+
+  - id: grain_03
+    category: grain
+    question: >
+      How many flights does the single busiest origin-destination pair have
+      overall?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT SUM(flight_count) AS n FROM od_hourly
+      GROUP BY origin, destination ORDER BY n DESC LIMIT 1
+    notes: Must roll up before ranking; ranking raw rows ranks hour-cells.
+
+  # --- timezone traps (hour_utc is UTC; Bangkok is UTC+7) ---
+  # tz questions repaired 2026-08-10 after runs 1-3: the original wording
+  # ("arrived during hour H") was ambiguous against the schema - flights
+  # last_seen, flights first_seen, and od_hourly give three defensible
+  # numbers, and the model burned its whole budget exploring exactly that
+  # tension. One trap per case (PHASE1_PLAN Q11): these anchor the table
+  # so the ONLY trap left is the UTC+7 conversion.
+  - id: tz_01
+    category: timezone
+    question: >
+      According to od_hourly, which hour of the day in Bangkok local time
+      has the most flights arriving at VTBS across all dates? Answer with
+      the hour number 0-23.
+    answer_type: number
+    ground_truth_sql: >
+      SELECT (CAST(substr(hour_utc, 12, 2) AS INTEGER) + 7) % 24 AS local_hour
+      FROM od_hourly WHERE destination = 'VTBS'
+      GROUP BY local_hour ORDER BY SUM(flight_count) DESC LIMIT 1
+    notes: UTC answer (1) and local answer (8) differ; no tie at the top.
+
+  - id: tz_02
+    category: timezone
+    question: >
+      According to od_hourly, how many flights to VTBS fall in the 21:00
+      hour Bangkok time (21:00-21:59 local), across all dates?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly
+      WHERE destination = 'VTBS'
+      AND CAST(substr(hour_utc, 12, 2) AS INTEGER) = 14
+    notes: Local 21 maps to UTC 14; filtering on local 21 directly is the trap.
+
+  - id: tz_03
+    category: timezone
+    question: >
+      According to od_hourly, how many flights departed VTBS between 01:00
+      and 04:59 Bangkok time, across all dates?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COALESCE(SUM(flight_count), 0) FROM od_hourly
+      WHERE origin = 'VTBS'
+      AND CAST(substr(hour_utc, 12, 2) AS INTEGER) BETWEEN 18 AND 21
+    notes: The night-trough window wraps to UTC 18-21 of the previous day.
+
+  # --- gate traps (gold sits behind drops; completeness lives in silver/audit) ---
+  - id: gate_01
+    category: gate
+    question: >
+      How many flights could not be attributed to both an origin and a
+      destination airport?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COUNT(*) FROM flights
+      WHERE est_departure_airport IS NULL OR est_arrival_airport IS NULL
+    notes: od_hourly cannot answer this; the dropped rows are not in it.
+
+  - id: gate_02
+    category: gate
+    question: >
+      In the most recent flights build, how many records were rejected for a
+      null arrival airport?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT rejected_null_arrival FROM build_audit ORDER BY run_ts DESC LIMIT 1
+    notes: Audit-table territory; get_build_audit or SQL both work.
+
+  - id: gate_03
+    category: gate
+    question: >
+      In the most recent states build, how many position records were rejected
+      because the aircraft was on the ground?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT rejected_on_ground FROM build_audit_states
+      ORDER BY run_ts DESC LIMIT 1
+    notes: Must hit build_audit_states, not build_audit (separate halves).
+
+  # --- measure traps (aircraft_count vs obs_count; distinct counts do not sum) ---
+  - id: meas_01
+    category: measure
+    question: >
+      How many distinct aircraft were observed airborne across the entire
+      dataset?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COUNT(DISTINCT icao24) FROM states WHERE on_ground = 0
+    notes: SUM(aircraft_count) over heatmap gives 11288-ish; truth is ~320.
+
+  - id: meas_02
+    category: measure
+    question: >
+      How many airborne position observations are recorded in heatmap_hourly
+      in total?
+    answer_type: number
+    ground_truth_sql: SELECT SUM(obs_count) FROM heatmap_hourly
+    notes: obs_count IS additive (each observation is in one cell-hour).
+
+  - id: meas_03
+    category: measure
+    question: >
+      What is the highest number of distinct aircraft recorded in any single
+      heatmap cell during a single hour?
+    answer_type: number
+    ground_truth_sql: SELECT MAX(aircraft_count) FROM heatmap_hourly
+    notes: Within one cell-hour, aircraft_count is the right measure as-is.
+
+  # --- grid traps (rounded cells do not nest; re-bin from silver states) ---
+  - id: grid_01
+    category: grid
+    question: >
+      How many distinct aircraft were observed airborne within the box from
+      latitude 13 to 14 and longitude 100 to 101, across all time?
+    answer_type: number
+    ground_truth_sql: >
+      SELECT COUNT(DISTINCT icao24) FROM states
+      WHERE on_ground = 0 AND latitude >= 13 AND latitude < 14
+      AND longitude >= 100 AND longitude < 101
+    notes: Summing heatmap aircraft_count in the box gives 7308-ish; truth ~295.
+
+  - id: grid_02
+    category: grid
+    question: >
+      Using ONLY the heatmap_hourly table, give the exact number of distinct
+      aircraft in the box latitude 13-14, longitude 100-101 across all time.
+    answer_type: refusal
+    reason_keywords: [distinct, sum, nest, states, double, duplicat, identifier, icao]
+    notes: >
+      Constrained to gold only, the exact distinct count is impossible:
+      distinct counts do not sum across cells/hours. Honest answer refuses
+      and points to states. Keywords broadened 2026-08-10 after run 1: the
+      model refused with the correct reason worded as "lacks aircraft
+      identifiers to de-duplicate", which the original list missed (a
+      scorer false negative, not a model failure).
+
+  # --- refusal traps (the data cannot answer; saying so is the win) ---
+  - id: refuse_01
+    category: refusal
+    question: How many flights were there over Bangkok on 2026-07-20?
+    answer_type: refusal
+    reason_keywords: [captur, coverage, "no data", collect, session]
+    notes: >
+      Date absent from coverage; answering 0 confuses "not captured" with
+      "no traffic".
+
+  - id: refuse_02
+    category: refusal
+    question: What was the average arrival delay for flights landing at VTBS?
+    answer_type: refusal
+    reason_keywords: [delay, schedule]
+    notes: No schedule or delay data exists anywhere in the contract.
+
+  - id: refuse_03
+    category: refusal
+    question: How many passengers flew from VTBS to VHHH in total?
+    answer_type: refusal
+    reason_keywords: [passenger]
+    notes: Flights are aircraft movements; passenger counts do not exist.

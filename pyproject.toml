@@ -1,0 +1,40 @@
+[project]
+name = "flightintel"
+version = "0.1.2"
+description = "Gen AI application layer over the AirflowOSky data platform: a LangGraph agent answering natural-language questions about Bangkok airspace."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "langgraph>=0.2",
+    "langchain-google-genai>=2.0",
+    # Runtime dep of the traced path: langfuse.langchain imports it.
+    # Locally it rode in via ragas (dev-only); the container exposed
+    # the missing declaration (phase 4 first-deploy 500).
+    "langchain>=1.0",
+    "pyyaml>=6.0",
+    "psycopg[binary]>=3.2",
+    "langfuse==4.14.4",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    # Cloud vector backend (PHASE4_PLAN Q2): VECTOR_SEARCH over the
+    # exported corpus table.
+    "google-cloud-bigquery>=3.25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ragas==0.4.3",
+    "httpx>=0.27",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

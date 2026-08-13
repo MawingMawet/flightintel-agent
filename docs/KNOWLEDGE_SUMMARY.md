@@ -163,3 +163,35 @@ harness design follows: deterministic checks run first and free, judged
 metrics only where they are meaningful (refusals and mixed answers
 punish the judge's assumptions), and any instrument change re-baselines
 every number produced under it.
+
+## 14. Swapping an engine under a contract is an experiment, not a config change
+
+The cloud deployment replaced pgvector with BigQuery vector search
+behind the unchanged search_docs contract. Method points that made the
+swap trustworthy: the vectors traveled by EXPORT from the dev store,
+never re-embedding (fresh embedding calls are not guaranteed
+bit-identical, which would have smuggled a second variable into any
+rank difference); backend selection is one environment variable, so
+the same eval harness measured both sides; and every result manifest
+records which store served it. Result: fixed-query rankings identical
+to four decimals, the full suite 9/13 on both engines with the same
+failure set. The float32 (pgvector) vs float64 (BigQuery) distance
+arithmetic was named as a risk up front and turned out not to surface
+at four decimal places - a risk retired by measurement, not assumption.
+
+## 15. Deployment is where undeclared assumptions surface
+
+Three phase 4 lessons, each caught by a real failure: (1) the
+container is the only honest statement of what the app needs - a
+dependency that rode into the dev venv via an eval-only package
+produced the first cloud 500, because the image built from the
+declared list told the truth. (2) Application Default Credentials is a
+search order, not a credential: the same client code authenticates as
+the developer locally (an explicit ADC file) and as a least-privilege
+service account in the cloud (the metadata server), and the two local
+gcloud credential stores are separate - a which-store bug that
+presents as a permission bug. (3) Probe the leg you actually use: the
+local vector store reported "accepting connections" inside its VM
+while the path the application takes (Windows -> WSL relay -> VM
+network address) was broken; a health check that tests a different
+path than production traffic is decorative.

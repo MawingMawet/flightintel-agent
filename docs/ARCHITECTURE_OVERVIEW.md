@@ -5,7 +5,9 @@ answers natural-language analytics questions about aircraft activity over
 Bangkok through a tool-calling LLM agent with two paths - live SQL for
 data questions, cited semantic search for knowledge questions - and an
 evaluation harness that measures both paths per failure category, per
-model, per prompt version, per corpus version.
+model, per prompt version, per corpus version. Since phase 4 the same
+agent serves from Google Cloud Run behind a public URL, traced end to
+end.
 
 ## System context
 
@@ -127,10 +129,14 @@ space; honesty is enforced by structure, not by trust:
   heading splits above it; bold-label Q&A blocks split into their own
   chunks since corpus v2, each with a citable id naming the exact
   question (Q3, Q14 in the phase plan).
-- **Local pgvector store.** Postgres 17 + pgvector inside WSL2 (port
-  5433), exact scan at this scale (no ANN index: a recorded choice, not
-  an oversight); embedding model and dimensions pinned in the index
-  manifest (ADRs 0007, 0008).
+- **Two vector stores, one contract.** Dev: Postgres 17 + pgvector
+  inside WSL2 (port 5433). Cloud: BigQuery vector search over the SAME
+  vectors, copied by export (never re-embedded). Both sit behind the
+  identical typed search_docs contract, selected by environment; exact
+  scan at this scale on both engines (no ANN index: a recorded choice
+  on pgvector, a hard threshold on BigQuery); embedding model and
+  dimensions pinned in each store's index manifest (ADRs 0007, 0008,
+  0010).
 - **Citations are chunk ids.** search_docs returns them, the prompt
   cites only ids returned in-conversation, the answer parser extracts
   retrieved and cited id lists, and the eval asserts cited is a subset
@@ -174,6 +180,37 @@ Measured results (gemini-3.5-flash):
   design flaw), not harness bugs.
 - Corpus v1 to v2: the seed probe's gold source moved from rank 9 to
   rank 1 by splitting one diluted Q&A chunk (the measured re-chunk).
+- pgvector to BigQuery (phase 4): fixed-query rankings identical with
+  distances equal to four decimals; the full RAG suite passed 9/13 on
+  both engines with the identical failure set - the backend swap was
+  proven invisible before it served anyone.
+
+## The cloud deployment (phase 4)
+
+```mermaid
+flowchart LR
+    U["public URL"] -->|HTTPS| CR["Cloud Run<br/>min 0 / max 1 instances<br/>dedicated least-privilege SA"]
+    AR["Artifact Registry<br/>versioned image with the<br/>data snapshot baked in"] --> CR
+    SM["Secret Manager<br/>API keys as env at deploy"] --> CR
+    CR -->|"VECTOR_SEARCH, cosine"| BQ["BigQuery<br/>doc_chunks: 178 x 3072"]
+    CR --> GM["Gemini API"]
+    CR -->|"tag env:cloud"| LF["Langfuse traces"]
+```
+
+- **The data rides in the image.** products.db (14 MB) is baked into a
+  deploy-tagged image variant; the tag records the snapshot date, and a
+  data refresh is a rebuild - staleness is a readable property, not a
+  surprise. The app still opens it read-only.
+- **Identity is ambient, never a key file.** Locally the BigQuery
+  client loads the developer's ADC file explicitly; on Cloud Run the
+  same code resolves the runtime service account from the metadata
+  server. That account can read one table, run query jobs, and access
+  its three secrets - nothing else.
+- **Cost by construction**: scale-to-zero when idle, max-instances 1 as
+  the spend cap on a public endpoint, free tiers doing the real work,
+  and cost-per-query recorded from traces (boot-to-serving 9.2s; a
+  warm cited answer 11.5s / 3 LLM requests; ~$0.00006 per doc search
+  at BigQuery's 10 MB billing minimum).
 
 ## Roadmap
 
@@ -181,8 +218,8 @@ Measured results (gemini-3.5-flash):
 |---|---|
 | 1 (done) | LangGraph agent core (SQL path) + trap-eval harness on SQLite |
 | 2 (done) | RAG path: pgvector, embeddings over both repos' docs with citations, RAGAS |
-| 3 (this) | Langfuse tracing, FastAPI service, Docker (app-only image, Engine in WSL) |
-| 4 | GCP deployment |
+| 3 (done) | Langfuse tracing, FastAPI service, Docker (app-only image, Engine in WSL) |
+| 4 (done) | GCP: Cloud Run + BigQuery vector search, re-proven, traced, public URL |
 
 ## Key decisions (ADR index)
 
